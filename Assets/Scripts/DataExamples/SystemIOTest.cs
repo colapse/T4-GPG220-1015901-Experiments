@@ -13,6 +13,8 @@ namespace DataExamples
 
         public PlayerSettings playerSettings;
 
+        public bool useBinaryWriter = false;
+
         // Start is called before the first frame update
         void Start()
         {
@@ -32,14 +34,38 @@ namespace DataExamples
 
             var playerSettingsJSON = JsonUtility.ToJson(playerSettings);
             var path = filePath == "" ? Path.Combine(Application.persistentDataPath, fileName) : filePath;
-            File.WriteAllText(path, playerSettingsJSON);
+
+            if (!useBinaryWriter)
+            {
+                File.WriteAllText(path, playerSettingsJSON);
+            }
+            else
+            {
+                using (var writer = new BinaryWriter(File.Open(path, FileMode.Create)))
+                {
+                    writer.Write(playerSettingsJSON);
+                }
+            }
         }
 
         public void Load()
         {
             var path = filePath == "" ? Path.Combine(Application.persistentDataPath, fileName) : filePath;
-            var playerSettingsJSON = File.ReadAllText(path);
+            var playerSettingsJSON = "";
 
+            if (!useBinaryWriter)
+            {
+                playerSettingsJSON = File.ReadAllText(path);
+            }
+            else if (File.Exists(fileName))
+            {
+                
+                using (var reader = new BinaryReader(File.Open(path, FileMode.Open)))
+                {
+                    playerSettingsJSON = reader.ReadString();
+                }
+            }
+            
             try
             {
                 playerSettings = JsonUtility.FromJson<PlayerSettings>(playerSettingsJSON);

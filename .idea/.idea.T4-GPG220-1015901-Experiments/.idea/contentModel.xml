@@ -39,6 +39,10 @@
           </e>
         </e>
         <e p="Scripts" t="Include">
+          <e p="CustomEditorExample" t="Include">
+            <e p="PlayerStats.cs" t="Include" />
+            <e p="PlayerStatsEditor.cs" t="Include" />
+          </e>
           <e p="DataExamples" t="Include">
             <e p="JSONTest.cs" t="Include" />
             <e p="PlayerSettings.cs" t="Include" />
