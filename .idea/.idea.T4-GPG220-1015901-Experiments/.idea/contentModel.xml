@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ContentModelStore">
-    <e p="C:\Users\ltnnler\.Rider2019.3\system\extResources" t="IncludeRecursive" />
-    <e p="C:\Users\ltnnler\.Rider2019.3\system\resharper-host\local\Transient\ReSharperHost\v193\SolutionCaches\_T4-GPG220-1015901-Experiments.-1771895861.00" t="ExcludeRecursive" />
-    <e p="C:\Users\ltnnler\Documents\GitHub\T4-GPG220-1015901-Experiments" t="IncludeRecursive">
+    <e p="C:\Users\Luca\.Rider2019.2\system\extResources" t="IncludeRecursive" />
+    <e p="C:\Users\Luca\.Rider2019.2\system\resharper-host\local\Transient\ReSharperHost\v192\SolutionCaches\_T4-GPG220-1015901-Experiments.-1352430923.00" t="ExcludeRecursive" />
+    <e p="C:\Users\Luca\Documents\gitrepos\T4-GPG220-1015901-Experiments" t="IncludeRecursive">
       <e p="Assembly-CSharp-Editor-firstpass.csproj" t="IncludeRecursive" />
       <e p="Assembly-CSharp-firstpass.csproj" t="IncludeRecursive" />
       <e p="Assembly-CSharp.csproj" t="IncludeRecursive" />
@@ -41,7 +41,7 @@
         <e p="Scripts" t="Include">
           <e p="Boids" t="Include">
             <e p="BoidsAgent.cs" t="Include" />
-            <e p="BoidsDeciderBase.cs" t="Include" />
+            <e p="BoidsSpawner.cs" t="Include" />
             <e p="GizmoBox.cs" t="Include" />
           </e>
           <e p="CustomEditorExample" t="Include">

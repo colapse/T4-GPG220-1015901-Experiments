@@ -13,15 +13,19 @@ public class BoidsAgent : MonoBehaviour
 
     public Quaternion desiredRotation;
 
-    public float rotationSpeed = 10f; // degrees/sec
+    public float rotationSpeed = 5f; // degrees/sec
     
-    public float maxSpeed = 2f;
+    public float maxSpeed = .3f;
     public float minSpeed = 0;
-    private float currentSpeed;
+    public float currentSpeed;
 
     public float obstacleDetectionDistance = 5f;
 
     public float[] obstacleRayDegrees;
+
+    public float tmpBoidsDetection = 0.8f; // 0 = 90, 1 = in front, -1 back
+
+    public LayerMask obstaclesLayerMask;
     public float CurrentSpeed
     {
         get => currentSpeed;
@@ -39,9 +43,10 @@ public class BoidsAgent : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
+        desiredRotation = default;
         // TODO calc desired rotation
-        CheckForObstacles();
         CheckForNeighbourBoids();
+        CheckForObstacles();
         
         
         Rotate();
@@ -50,13 +55,16 @@ public class BoidsAgent : MonoBehaviour
 
     public bool CheckForNeighbourBoids()
     {
-        var neighboursInFront = nearestBoids.Where(boid => Vector3.Dot(transform.forward, (transform.position - boid.transform.position)) >= 0).OrderBy(boid => Vector3.Distance(boid.transform.position, transform.position)).ToList(); // 90deg view
+        var nearestBoid = nearestBoids.Where(boid => Vector3.Dot(transform.forward, (boid.transform.position-transform.position)) >= tmpBoidsDetection).OrderBy(boid => Vector3.Distance(boid.transform.position, transform.position)).FirstOrDefault();
         //var neighboursInFront = nearestBoids.Where(boid => Vector3.Dot(transform.forward, (transform.position - boid.transform.position)) >= 0).ToList().Sort((boid1, boid2) => return Vector3.Distance(boid1.transform.position, transform.position).CompareTo(Vector3.Distance(boid2.transform.position, transform.position))); // 90deg view
-
-        if (neighboursInFront != null && neighboursInFront.Count > 0)
+        
+        if (nearestBoid != null)
         {
-            var nearestBoid = neighboursInFront[0];
-            desiredRotation = Quaternion.LookRotation(nearestBoid.transform.position-transform.position);
+            var otherBoidLookingDir =
+                Vector3.Dot(transform.forward, (nearestBoid.transform.position - transform.position));
+            //desiredRotation = Quaternion.LookRotation(nearestBoid.transform.forward);
+            if(otherBoidLookingDir < 0)
+                desiredRotation = Quaternion.LookRotation(nearestBoid.transform.position-transform.position);
         }
         
         return true;
@@ -76,10 +84,12 @@ public class BoidsAgent : MonoBehaviour
         
         
         var minAngle = Mathf.Abs(obstacleRayDegrees.Min());
-        var frontCollisions = Physics.BoxCastAll(curPos, new Vector3(minAngle, minAngle, minAngle), fwdDir, curRot,
-            obstacleDetectionDistance);
+        var frontCollision = Physics.BoxCast(curPos, new Vector3(minAngle, minAngle, minAngle), fwdDir, curRot,
+            obstacleDetectionDistance,obstaclesLayerMask);
+        //Debug.DrawRay(curPos,fwdDir*obstacleDetectionDistance, Color.cyan, 10f);
 
-        if (frontCollisions == null || frontCollisions.Length == 0) return false;
+        if (!frontCollision) return false;
+        //Debug.Log("Hit!");
             
         var sideCollisions = new List<RaycastHit>();
 
@@ -96,13 +106,20 @@ public class BoidsAgent : MonoBehaviour
             var dirRight = Quaternion.Euler(0, angle, 0) * fwdDir;
             var dirUp = Quaternion.Euler(angle, 0, 0) * fwdDir;
             var dirDown = Quaternion.Euler(-angle, 0, 0) * fwdDir;
+            /*
+
+            Debug.DrawRay(curPos,dirLeft*obstacleDetectionDistance, Color. green, 10f);
+            Debug.DrawRay(curPos,dirRight*obstacleDetectionDistance, Color.green, 10f);
+            Debug.DrawRay(curPos,dirUp*obstacleDetectionDistance, Color.green, 10f);
+            Debug.DrawRay(curPos,dirDown*obstacleDetectionDistance, Color.green, 10f);*/
+            
             
             var hits = new RaycastHit[4];
 
             Vector3 newDesiredDir;
             var newDesiredDirHitDist = float.MaxValue;
 
-            if (Physics.BoxCast(curPos, boxHalfExtens, dirLeft, out var hitLeft, curRot, obstacleDetectionDistance))
+            if (Physics.BoxCast(curPos, boxHalfExtens, dirLeft, out var hitLeft, curRot, obstacleDetectionDistance,obstaclesLayerMask))
             {
                 newDesiredDir = curPos - hitLeft.point;
                 newDesiredDirHitDist = hitLeft.distance;
@@ -113,7 +130,7 @@ public class BoidsAgent : MonoBehaviour
                 newDesiredDirHitDist = float.MaxValue;
             }
 
-            if (Physics.BoxCast(curPos, boxHalfExtens, dirRight, out var hitRight, curRot, obstacleDetectionDistance) && hitRight.distance > newDesiredDirHitDist)
+            if (Physics.BoxCast(curPos, boxHalfExtens, dirRight, out var hitRight, curRot, obstacleDetectionDistance,obstaclesLayerMask) && hitRight.distance > newDesiredDirHitDist)
             {
                 newDesiredDir = curPos - hitRight.point;
                 newDesiredDirHitDist = hitRight.distance;
@@ -123,7 +140,7 @@ public class BoidsAgent : MonoBehaviour
                 newDesiredDirHitDist = float.MaxValue;
             }
 
-            if (Physics.BoxCast(curPos, boxHalfExtens, dirUp, out var hitUp, curRot, obstacleDetectionDistance) && hitUp.distance > newDesiredDirHitDist)
+            if (Physics.BoxCast(curPos, boxHalfExtens, dirUp, out var hitUp, curRot, obstacleDetectionDistance,obstaclesLayerMask) && hitUp.distance > newDesiredDirHitDist)
             {
                 newDesiredDir = curPos - hitUp.point;
                 newDesiredDirHitDist = hitUp.distance;
@@ -133,7 +150,7 @@ public class BoidsAgent : MonoBehaviour
                 newDesiredDirHitDist = float.MaxValue;
             }
 
-            if (Physics.BoxCast(curPos, boxHalfExtens, dirDown, out var hitDown, curRot, obstacleDetectionDistance) && hitDown.distance > newDesiredDirHitDist)
+            if (Physics.BoxCast(curPos, boxHalfExtens, dirDown, out var hitDown, curRot, obstacleDetectionDistance,obstaclesLayerMask) && hitDown.distance > newDesiredDirHitDist)
             {
                 newDesiredDir = curPos - hitDown.point;
                 newDesiredDirHitDist = hitDown.distance;
@@ -143,7 +160,7 @@ public class BoidsAgent : MonoBehaviour
                 newDesiredDirHitDist = float.MaxValue;
             }
 
-            
+            desiredRotation = Quaternion.LookRotation(newDesiredDir);
 
             /*var collisionLeft =
                 Physics.BoxCastAll(curPos, boxHalfExtens, dirLeft, curRot, obstacleDetectionDistance);
@@ -168,7 +185,7 @@ public class BoidsAgent : MonoBehaviour
 
     private void Rotate()
     {
-        if (!transform.rotation.Equals(desiredRotation))
+        if (desiredRotation != default)
         {
             transform.rotation = Quaternion.RotateTowards(transform.rotation, desiredRotation, rotationSpeed);
         }
@@ -182,14 +199,18 @@ public class BoidsAgent : MonoBehaviour
     public void OnTriggerEnter(Collider other)
     {
         var agent = other.GetComponent<BoidsAgent>();
-        if(agent != null)
+        if (agent != null)
+        {
             nearestBoids.Add(agent);
+        }
     }
 
     public void OnTriggerExit(Collider other)
     {
         var agent = other.GetComponent<BoidsAgent>();
-        if(agent != null)
+        if (agent != null)
+        {
             nearestBoids.Remove(agent);
+        }
     }
 }
